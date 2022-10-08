@@ -6,10 +6,11 @@ namespace GameFoundation.Scripts.Network.WebService
     using BestHTTP;
     using Cysharp.Threading.Tasks;
     using GameFoundation.Scripts.Models;
-    using GameFoundation.Scripts.Network.NetworkConfig;
     using GameFoundation.Scripts.Network.WebService.Interface;
     using GameFoundation.Scripts.Utilities.LogService;
     using GameFoundation.Scripts.Utilities.Utils;
+    using global::Models;
+    using NetworkConfig;
     using Newtonsoft.Json;
     using UnityEngine;
     using Zenject;
@@ -27,10 +28,10 @@ namespace GameFoundation.Scripts.Network.WebService
         #region HttpRequest
 
         /// <summary>Zenject injection will go here.</summary>
-        public BestHttpService(string uri, NetworkConfig networkConfig, ILogService logger, DiContainer container,
+        public BestHttpService(string uri, GDKConfig gdkConfig, ILogService logger, DiContainer container,
             GameFoundationLocalData localData) : base(logger, container, uri)
         {
-            this.networkConfig = networkConfig;
+            this.networkConfig = gdkConfig.GetGameConfig<NetworkConfig>();
             this.localData     = localData;
         }
 
@@ -158,8 +159,8 @@ namespace GameFoundation.Scripts.Network.WebService
 
         public string GetDownloadPath(string path) => $"{Application.persistentDataPath}/{path}";
 
-        private double GetHttpTimeout()     => this.networkConfig.HttpRequestTimeout;
-        private double GetDownloadTimeout() => this.networkConfig.DownloadRequestTimeout;
+        private double GetHttpTimeout()     => this.networkConfig.httpRequestTimeout;
+        private double GetDownloadTimeout() => this.networkConfig.downloadRequestTimeout;
 
         #endregion
     }

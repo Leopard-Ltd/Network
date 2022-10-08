@@ -1,10 +1,14 @@
 {
-    "name": "GameFoundation.Network.Config",
+    "name": "GameNetwork.Editor",
     "rootNamespace": "",
     "references": [
-        "GameFoundation.Models"
+        "GameFoundation.Editor",
+        "GameFoundation.Models",
+        "GameFoundation.Network.Config"
     ],
-    "includePlatforms": [],
+    "includePlatforms": [
+        "Editor"
+    ],
     "excludePlatforms": [],
     "allowUnsafeCode": false,
     "overrideReferences": false,

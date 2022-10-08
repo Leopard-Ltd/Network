@@ -15,9 +15,6 @@ namespace GameFoundation.Scripts.Network
             this.Container.Bind<IHttpService>().To<BestHttpService>().AsCached().WithArguments("HttpServiceURI");
             // this.Container.Bind<AuthenticationService>().To<AuthenticationService>().AsCached().WithArguments("AuthServiceURI");
 
-            // //TODO move this into BestHttpService instead of separate them
-            this.Container.Bind<NetworkConfig.NetworkConfig>().AsSingle().NonLazy();
-
             // Pooling for http request object, transfer data object
             this.Container.BindIFactoryForAllDriveTypeFromPool<BaseHttpRequest>();
             this.Container.BindIFactory<ClientWrappedHttpRequestData>().FromPoolableMemoryPool();
