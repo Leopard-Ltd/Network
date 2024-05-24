@@ -4,7 +4,7 @@ namespace GameFoundation.Scripts.Network.WebService.Requests
     using GameFoundation.Scripts.Utilities.Utils;
 
     [HttpRequestDefinition("login/authentication")]
-    public class LoginRequestData : IHttpRequestData
+    public class LoginRequestData
     {
         public string DeviceToken { get; set; }
         public string FbToken     { get; set; }
@@ -19,7 +19,7 @@ namespace GameFoundation.Scripts.Network.WebService.Requests
     ///     5. Invalid otp
     ///     6. Invalid email
     /// </summary>
-    public class LoginResponseData : IHttpResponseData
+    public class LoginResponseData
     {
         public static int OtpExpireTime  = 180; // OTP expire time in seconds.
         public static int ResendableTime = 10; // after ResendableTime seconds, user can request the OTP again.

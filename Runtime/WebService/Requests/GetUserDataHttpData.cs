@@ -5,11 +5,11 @@ namespace GameFoundation.Scripts.Network.WebService.Requests
     using GameFoundation.Scripts.Utilities.Utils;
 
     [HttpRequestDefinition("user/data/get")]
-    public class GetUserDataRequestData : IHttpRequestData
+    public class GetUserDataRequestData
     {
     }
 
-    public class GetUserDataResponseData : IHttpResponseData
+    public class GetUserDataResponseData
     {
         public UserData UserData { get; set; } = new();
     }

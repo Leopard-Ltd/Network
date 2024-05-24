@@ -5,7 +5,7 @@ namespace GameFoundation.Scripts.Network.WebService.Requests
 
     /// <summary>Will response LoginResponseData</summary>
     [HttpRequestDefinition("otp/verify")]
-    public class VerifyOtpRequestData : IHttpRequestData
+    public class VerifyOtpRequestData
     {
         public string Email { get; set; }
         public string Code  { get; set; }

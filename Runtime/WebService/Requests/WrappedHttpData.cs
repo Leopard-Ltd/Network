@@ -1,21 +1,21 @@
 namespace GameFoundation.Scripts.Network.WebService.Requests
 {
     using System.Collections.Generic;
-    using GameFoundation.Scripts.Network.WebService.Interface;
+    using Newtonsoft.Json;
 
-    public class WrappedHttpRequestData<T> : WrappedHttpRequestData where T : IHttpRequestData
+    public class WrappedHttpRequestData<T> : WrappedHttpRequestData
     {
         public new T Data { get; set; }
     }
 
-    public class WrappedHttpResponseData<T> : WrappedHttpResponseData where T : IHttpResponseData
+    public class WrappedHttpResponseData<T> : WrappedHttpResponseData
     {
         public new T Data { get; set; }
     }
 
     public class WrappedHttpRequestData
     {
-        public IHttpRequestData Data { get; set; }
+        public object Data { get; set; }
     }
 
     /// <summary>
@@ -24,16 +24,27 @@ namespace GameFoundation.Scripts.Network.WebService.Requests
     /// </summary>
     public class WrappedHttpResponseData
     {
-        public IHttpResponseData        Data     { get; set; }
+        public object                   Data     { get; set; }
         public Dictionary<string, long> Currency { get; set; } = new();
     }
 
     public static class CommonErrorCode
     {
-        public const int Unknown          = 500;
-        public const int NotFound         = 101;
-        public const int InvalidData      = 102;
-        public const int InvalidBlueprint = 1001;
+        public const int Unknown             = 500;
+        public const int NotFound            = 101;
+        public const int InvalidData         = 102;
+        public const int InvalidBlueprint    = 1001;
+        public const int BadRequest          = 400;
+        public const int Unauthorized        = 401;
+        public const int RequestForbidden    = 403;
+        public const int InternalServerError = 500;
+    }
+
+    public class ErrorData
+    {
+        public int    Code    { get; set; }
+        public string Message { get; set; }
+        public string Name    { get; set; }
     }
 
     public class ErrorResponse
@@ -62,7 +73,7 @@ namespace GameFoundation.Scripts.Network.WebService.Requests
             this.Code    = code;
             this.Message = message;
         }
-        public int    Code    { get; set; }
-        public string Message { get; set; }
+     [JsonProperty("statusCode")] public int    Code    { get; set; }
+     [JsonProperty("message")] public string Message { get; set; }
     }
 }

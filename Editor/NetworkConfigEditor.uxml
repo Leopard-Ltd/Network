@@ -1,9 +1,0 @@
-<ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" editor-extension-mode="True">
-    <ui:VisualElement name="NetworkConfig" style="margin-top: 10px;">
-        <ui:Label text="Network Config" display-tooltip-when-elided="true" style="-unity-font-style: bold;" />
-    </ui:VisualElement>
-    <ui:VisualElement name="ServerConfig" style="margin-top: 10px;">
-        <ui:Label text="Server Config" display-tooltip-when-elided="true" style="-unity-font-style: bold;" />
-        <uie:ObjectField label="Server Config" type="NetworkConfig.ServerConfig, GameFoundation.Network.Config" name="ServerConfigPicker" />
-    </ui:VisualElement>
-</ui:UXML>

@@ -5,8 +5,8 @@ namespace GameFoundation.Scripts.Network.Websocket
     using System.Threading.Tasks;
     using BestHTTP.SignalRCore;
     using BestHTTP.SignalRCore.Encoders;
-    using GameFoundation.Scripts.Models;
     using GameFoundation.Scripts.Utilities.LogService;
+    using global::Models;
     using UniRx;
 
     /// <summary>Temporary websocket service (signalR) for battle.</summary>
@@ -14,8 +14,8 @@ namespace GameFoundation.Scripts.Network.Websocket
     {
         #region zenject
 
-        protected readonly GameFoundationLocalData localData;
-        protected readonly ILogService             logger;
+        protected readonly NetworkLocalData localData;
+        protected readonly ILogService      logger;
 
         #endregion
 
@@ -24,7 +24,7 @@ namespace GameFoundation.Scripts.Network.Websocket
         public ReactiveProperty<ServiceStatus> State         { get; private set; }
         public HubConnection                   HubConnection { get; set; }
 
-        public BestHttpWebsocketService(GameFoundationLocalData localData, ILogService logger)
+        public BestHttpWebsocketService(NetworkLocalData localData, ILogService logger)
         {
             this.localData = localData;
             this.logger    = logger;
@@ -35,7 +35,7 @@ namespace GameFoundation.Scripts.Network.Websocket
         {
             this.HubConnection = new HubConnection(new Uri(uri), new MessagePackProtocol())
             {
-                AuthenticationProvider = new CustomAuthenticator(token, MechVersion.Version),
+                AuthenticationProvider = new CustomAuthenticator(token, GameVersion.Version),
                 Options                = { SkipNegotiation = true, PreferedTransport = TransportTypes.WebSocket }
             };
 
@@ -87,16 +87,17 @@ namespace GameFoundation.Scripts.Network.Websocket
             {
                 if (this.State.Value == ServiceStatus.Connected)
                 {
-                    return this.HubConnection.SendAsync(target, this.CancellationTokenSource.Token, args);;
+                    return this.HubConnection.SendAsync(target, this.CancellationTokenSource.Token, args);
+                    ;
                 }
-                
+
                 this.logger.Warning($"Not in Connected state! Current state: {this.State.Value}");
             }
             catch (Exception e)
             {
                 this.OnInvokeError(e);
             }
-            
+
             return Task.CompletedTask;
         }
 

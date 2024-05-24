@@ -4,7 +4,7 @@ namespace GameFoundation.Scripts.Network.WebService.Requests
     using GameFoundation.Scripts.Utilities.Utils;
 
     [HttpRequestDefinition("otp/send")]
-    public class SendOtpRequestData : IHttpRequestData
+    public class SendOtpRequestData
     {
         public string Email { get; set; }
     }
@@ -14,7 +14,7 @@ namespace GameFoundation.Scripts.Network.WebService.Requests
     ///     1. Invalid email
     ///     2. Too many request
     /// </summary>
-    public class SendOtpResponseData : IHttpResponseData
+    public class SendOtpResponseData
     {
         public int    Status { get; set; }
         public string Code   { get; set; }
