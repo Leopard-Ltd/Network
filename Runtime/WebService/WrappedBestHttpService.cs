@@ -31,14 +31,16 @@
 
         public string Host { get; set; }
 
-        public virtual void InitRequest(HTTPRequest request, object httpRequestData)
+        #region Post
+
+        public virtual void InitPostRequest(HTTPRequest request, object httpRequestData, string token)
         {
             using (var wrappedData = this.Container.Resolve<IFactory<ClientWrappedHttpRequestData>>().Create())
             {
                 wrappedData.Data = httpRequestData;
                 request.AddHeader("Content-Type", "application/json");
 
-                var jwtToken = this.localData.ServerToken.JwtToken;
+                var jwtToken = token;
 
                 if (!string.IsNullOrEmpty(jwtToken))
                 {
@@ -54,7 +56,7 @@
             }
         }
 
-        public virtual async UniTask<TK> SendPostAsync<T, TK>(object httpRequestData = null) where T : BasePostRequest<TK>
+        public virtual async UniTask<TK> SendPostAsync<T, TK>(object httpRequestData = null, string jwtToken = "") where T : BasePostRequest<TK>
         {
             if (Attribute.GetCustomAttribute(typeof(T), typeof(HttpRequestDefinitionAttribute)) is not HttpRequestDefinitionAttribute httpRequestDefinition)
             {
@@ -76,7 +78,7 @@
             var request = new HTTPRequest(this.ReplaceUri(httpRequestDefinition.Route), HTTPMethods.Post);
             request.Timeout = TimeSpan.FromSeconds(this.GetHttpTimeout());
 
-            this.InitRequest(request, httpRequestData);
+            this.InitPostRequest(request, httpRequestData, jwtToken);
 
             try
             {
@@ -94,7 +96,23 @@
             }
         }
 
-        public virtual async UniTask<TK> SendGetAsync<T, TK>(object httpRequestData = null, bool includeBody = true) where T : BaseGetRequest<TK>
+        #endregion
+
+        #region Get
+
+        public virtual void InitGetRequest(HTTPRequest request, object httpRequestData, string token)
+        {
+            
+            if (!string.IsNullOrEmpty(token))
+            {
+                request.AddHeader("Authorization", "Bearer " + token);
+            }
+
+            request.AddHeader("Content-Type", "application/json");
+            request.RawData = Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(httpRequestData));
+        }
+
+        public virtual async UniTask<TK> SendGetAsync<T, TK>(object httpRequestData = null, string jwtToken = "", bool includeBody = true) where T : BaseGetRequest<TK>
         {
             if (Attribute.GetCustomAttribute(typeof(T), typeof(HttpRequestDefinitionAttribute)) is not HttpRequestDefinitionAttribute httpRequestDefinition)
             {
@@ -128,7 +146,7 @@
 
             if (includeBody)
             {
-                this.InitRequest(httpRequest, httpRequestData);
+                this.InitGetRequest(httpRequest, httpRequestData, jwtToken);
             }
 
             try
@@ -147,9 +165,158 @@
             }
         }
 
-        public virtual UniTask<TK> SetPutAsync<T, TK>(object httpRequestData = null) where T : BasePutRequest<TK> { throw new NotImplementedException(); }
+        #endregion
 
-        public virtual async UniTask<TK> SendDeleteAsync<T, TK>(object httpRequestData = null,string jwtToken="",bool includeBody = true) where T : BaseDeleteRequest<TK>
+        #region Put
+
+        public virtual void InitRequestPut(HTTPRequest request, object httpRequestData, string token)
+        {
+            if (!string.IsNullOrEmpty(token))
+            {
+                request.AddHeader("Authorization", "Bearer " + token);
+            }
+
+            request.AddHeader("Content-Type", "application/json");
+            request.RawData = Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(httpRequestData));
+        }
+
+        public async UniTask<TK> SendPutAsync<T, TK>(object httpRequestData = null, string jwtToken = "", bool includeBody = false) where T : BasePutRequest<TK>
+        {
+            if (Attribute.GetCustomAttribute(typeof(T), typeof(HttpRequestDefinitionAttribute)) is not HttpRequestDefinitionAttribute httpRequestDefinition)
+            {
+                throw new Exception($"request {typeof(T)} wasn't defined yet!!! Please add HttpRequestDefinitionAttribute for it!!!!");
+            }
+
+#if (DEVELOPMENT_BUILD || UNITY_EDITOR) &&FAKE_DATA
+            if (typeof(IFakeResponseAble<TK>).IsAssignableFrom(typeof(T)))
+            {
+                var baseHttpRequest = this.Container.Resolve<IFactory<T>>().Create();
+                var responseData = ((IFakeResponseAble<TK>)baseHttpRequest).FakeResponse();
+                baseHttpRequest.Process(responseData);
+
+                return responseData;
+            }
+#endif
+
+            var parameters    = new StringBuilder();
+            var propertyInfos = httpRequestData.GetType().GetProperties();
+
+            if (propertyInfos.Length > 0)
+            {
+                var parametersStr =
+                    $"?{propertyInfos.Select(propertyInfo => typeof(IEnumerable<string>).IsAssignableFrom(propertyInfo.PropertyType) ? (propertyInfo.GetValue(httpRequestData) as IEnumerable<string>)?.Select(value => $"{propertyInfo.Name}={value}").Join("&") : $"{propertyInfo.Name}={propertyInfo.GetValue(httpRequestData)}").Join("&")}";
+
+                parameters.Append(parametersStr);
+            }
+
+            var httpRequest = new HTTPRequest(this.ReplaceUri($"{httpRequestDefinition.Route}{parameters}"), HTTPMethods.Put);
+            httpRequest.Timeout = TimeSpan.FromSeconds(this.GetHttpTimeout());
+
+            if (includeBody)
+            {
+                this.InitRequestPut(httpRequest, httpRequestData, jwtToken);
+            }
+
+            try
+            {
+                this.HasInternetConnection.Value = true;
+
+                return await this.MainProcess<T, TK>(httpRequest, httpRequestData);
+            }
+            catch (AsyncHTTPException ex)
+            {
+                this.Logger.Log($"Request {httpRequest.Uri} Error");
+                this.HasInternetConnection.Value = false;
+                this.HandleAsyncHttpException(ex);
+
+                return default;
+            }
+        }
+
+        #endregion
+
+        #region Pacth
+
+        public virtual void InitRequestPatch(HTTPRequest request, object httpRequestData, string token)
+        {
+            if (!string.IsNullOrEmpty(token))
+            {
+                request.AddHeader("Authorization", "Bearer " + token);
+            }
+
+            request.AddHeader("Content-Type", "application/json");
+            request.RawData = Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(httpRequestData));
+        }
+
+        public async UniTask<TK> SendPatchAsync<T, TK>(object httpRequestData = null, string jwtToken = "", bool includeBody = true) where T : BasePatchRequest<TK>
+        {
+            if (Attribute.GetCustomAttribute(typeof(T), typeof(HttpRequestDefinitionAttribute)) is not HttpRequestDefinitionAttribute httpRequestDefinition)
+            {
+                throw new Exception($"request {typeof(T)} wasn't defined yet!!! Please add HttpRequestDefinitionAttribute for it!!!!");
+            }
+
+#if (DEVELOPMENT_BUILD || UNITY_EDITOR) &&FAKE_DATA
+            if (typeof(IFakeResponseAble<TK>).IsAssignableFrom(typeof(T)))
+            {
+                var baseHttpRequest = this.Container.Resolve<IFactory<T>>().Create();
+                var responseData = ((IFakeResponseAble<TK>)baseHttpRequest).FakeResponse();
+                baseHttpRequest.Process(responseData);
+
+                return responseData;
+            }
+#endif
+
+            var parameters    = new StringBuilder();
+            var propertyInfos = httpRequestData.GetType().GetProperties();
+
+            if (propertyInfos.Length > 0)
+            {
+                var parametersStr =
+                    $"?{propertyInfos.Select(propertyInfo => typeof(IEnumerable<string>).IsAssignableFrom(propertyInfo.PropertyType) ? (propertyInfo.GetValue(httpRequestData) as IEnumerable<string>)?.Select(value => $"{propertyInfo.Name}={value}").Join("&") : $"{propertyInfo.Name}={propertyInfo.GetValue(httpRequestData)}").Join("&")}";
+
+                parameters.Append(parametersStr);
+            }
+
+            var httpRequest = new HTTPRequest(this.ReplaceUri($"{httpRequestDefinition.Route}{parameters}"), HTTPMethods.Patch);
+            httpRequest.Timeout = TimeSpan.FromSeconds(this.GetHttpTimeout());
+
+            if (includeBody)
+            {
+                this.InitRequestPatch(httpRequest, httpRequestData, jwtToken);
+            }
+
+            try
+            {
+                this.HasInternetConnection.Value = true;
+
+                return await this.MainProcess<T, TK>(httpRequest, httpRequestData);
+            }
+            catch (AsyncHTTPException ex)
+            {
+                this.Logger.Log($"Request {httpRequest.Uri} Error");
+                this.HasInternetConnection.Value = false;
+                this.HandleAsyncHttpException(ex);
+
+                return default;
+            }
+        }
+
+        #endregion
+
+        #region Delete
+
+        public virtual void InitDeleteRequest(HTTPRequest request, object httpRequestData, string token)
+        {
+            if (!string.IsNullOrEmpty(token))
+            {
+                request.AddHeader("Authorization", "Bearer " + token);
+            }
+
+            request.AddHeader("Content-Type", "application/json");
+            request.RawData = Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(httpRequestData));
+        }
+
+        public virtual async UniTask<TK> SendDeleteAsync<T, TK>(object httpRequestData = null, string jwtToken = "", bool includeBody = true) where T : BaseDeleteRequest<TK>
         {
             if (Attribute.GetCustomAttribute(typeof(T), typeof(HttpRequestDefinitionAttribute)) is not HttpRequestDefinitionAttribute httpRequestDefinition)
             {
@@ -183,7 +350,7 @@
 
             if (includeBody)
             {
-                this.InitRequest(httpRequest, httpRequestData);
+                this.InitDeleteRequest(httpRequest, httpRequestData, jwtToken);
             }
 
             try
@@ -201,6 +368,8 @@
                 return default;
             }
         }
+
+        #endregion
 
         //TODO need to test and improve code here, this is just a temporary logic
         /// <summary>
@@ -294,7 +463,8 @@
 
         protected double GetDownloadTimeout() => this.networkConfig.DownloadRequestTimeout;
 
-        public BoolReactiveProperty HasInternetConnection { get; set; } = new(true);
+        public BoolReactiveProperty HasInternetConnection                                        { get; set; } = new(true);
+        public void                 InitPostRequest(HTTPRequest request, object httpRequestData) { throw new NotImplementedException(); }
 
         protected Uri ReplaceUri(string route)
         {

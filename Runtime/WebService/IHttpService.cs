@@ -15,13 +15,15 @@ namespace GameFoundation.Scripts.Network.WebService
         string Host { get; set; }
 
         /// <summary>Send http request async with a IHttpRequestData</summary>
-        UniTask<TK> SendPostAsync<T, TK>(object httpRequestData = null) where T : BasePostRequest<TK>;
+        UniTask<TK> SendPostAsync<T, TK>(object httpRequestData = null, string jwtToken = "") where T : BasePostRequest<TK>;
 
-        UniTask<TK> SendGetAsync<T, TK>(object httpRequestData = null, bool includeBody = true) where T : BaseGetRequest<TK>;
+        UniTask<TK> SendGetAsync<T, TK>(object httpRequestData = null, string jwtToken = "", bool includeBody = true) where T : BaseGetRequest<TK>;
 
-        UniTask<TK> SetPutAsync<T, TK>(object httpRequestData = null) where T : BasePutRequest<TK>;
+        UniTask<TK> SendPutAsync<T, TK>(object httpRequestData = null, string jwtToken = "", bool includeBody = false) where T : BasePutRequest<TK>;
 
-        UniTask<TK> SendDeleteAsync<T, TK>(object httpRequestData = null,string jwtToken="", bool includeBody = true) where T : BaseDeleteRequest<TK>;
+        UniTask<TK> SendPatchAsync<T, TK>(object httpRequestData = null, string jwtToken = "", bool includeBody = true) where T : BasePatchRequest<TK>;
+
+        UniTask<TK> SendDeleteAsync<T, TK>(object httpRequestData = null, string jwtToken = "", bool includeBody = true) where T : BaseDeleteRequest<TK>;
 
         /// <summary>Download from <paramref name="address"/> to <paramref name="filePath"/>, download progress will be updated into <paramref name="onDownloadProgress"/>.</summary>
         UniTask Download(string address, string filePath, OnDownloadProgressDelegate onDownloadProgress);
@@ -32,7 +34,6 @@ namespace GameFoundation.Scripts.Network.WebService
         string GetDownloadPath(string path);
 
         BoolReactiveProperty HasInternetConnection { get; set; }
-        void                 InitRequest(HTTPRequest request, object httpRequestData);
     }
 
     /// <summary>Download progress delegate.</summary>
@@ -79,6 +80,11 @@ namespace GameFoundation.Scripts.Network.WebService
     public abstract class BasePutRequest<T> : BaseHttpRequest<T>
     {
         protected BasePutRequest(ILogService logger) : base(logger) { }
+    }
+
+    public abstract class BasePatchRequest<T> : BaseHttpRequest<T>
+    {
+        protected BasePatchRequest(ILogService logger) : base(logger) { }
     }
 
     public abstract class BaseDeleteRequest<T> : BaseHttpRequest<T>
