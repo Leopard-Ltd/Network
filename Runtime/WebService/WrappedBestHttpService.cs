@@ -16,13 +16,13 @@
     using UnityEngine;
     using Zenject;
 
-    public class WrappedBestHttpService : BestHttpBaseProcess, IHttpService
+    public class WrappedService : BaseProcess, IHttpService
     {
         protected readonly ILogService      logger;
         protected readonly NetworkConfig    networkConfig;
         protected readonly NetworkLocalData localData;
 
-        public WrappedBestHttpService(ILogService logger, DiContainer container, NetworkConfig networkConfig, NetworkLocalData localData) : base(logger, container)
+        public WrappedService(ILogService logger, DiContainer container, NetworkConfig networkConfig, NetworkLocalData localData) : base(logger, container)
         {
             this.logger        = logger;
             this.networkConfig = networkConfig;

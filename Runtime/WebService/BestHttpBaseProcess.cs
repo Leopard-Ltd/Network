@@ -10,9 +10,9 @@
     using Newtonsoft.Json.Linq;
     using Zenject;
 
-    public abstract class BestHttpBaseProcess
+    public abstract class BaseProcess
     {
-        protected BestHttpBaseProcess(ILogService logger, DiContainer container)
+        protected BaseProcess(ILogService logger, DiContainer container)
         {
             this.Logger    = logger;
             this.Container = container;
@@ -29,7 +29,7 @@
             }
             catch (Exception e)
             {
-                //
+                this.Logger.Error($"{e.Message} - {e.StackTrace}");
             }
 
 #endif
@@ -90,7 +90,7 @@
             var baseHttpRequest = this.Container.Resolve<IFactory<T>>().Create();
             var data            = responseData.ToObject<TK>();
 
-            if (this.GetType().IsAssignableFrom(typeof(WrappedBestHttpService)))
+            if (this.GetType().IsAssignableFrom(typeof(WrappedService)))
             {
                 if (responseData.TryGetValue("data", out var requestProcessData))
                 {

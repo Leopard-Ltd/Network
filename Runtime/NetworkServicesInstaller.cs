@@ -20,7 +20,7 @@ namespace GameFoundation.Scripts.Network
             this.Container.BindIFactoryForAllDriveTypeFromPool<BaseHttpRequest>();
             this.Container.BindIFactory<ClientWrappedHttpRequestData>().FromPoolableMemoryPool();
             this.Container.DeclareSignal<MissStatusCodeSignal>();
-            var noWrapHttpService = this.Container.Instantiate<NoWrappedBestHttpService>();
+            var noWrapHttpService = this.Container.Instantiate<NoWrappedService>();
             this.Container.Bind<IHttpService>().FromInstance(noWrapHttpService).AsCached();
         }
 
