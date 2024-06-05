@@ -10,9 +10,9 @@
     using Newtonsoft.Json.Linq;
     using Zenject;
 
-    public abstract class BaseProcess
+    public abstract class BestBaseHttpProcess
     {
-        protected BaseProcess(ILogService logger, DiContainer container)
+        protected BestBaseHttpProcess(ILogService logger, DiContainer container)
         {
             this.Logger    = logger;
             this.Container = container;
@@ -48,33 +48,49 @@
                 {
                     switch (statusCode)
                     {
-                        case CommonErrorCode.Unknown:
-                            this.Logger.Error($"Code {statusCode}: Unknown error");
-
-                            break;
-                        case CommonErrorCode.NotFound:
-                            this.Logger.Error($"Code {statusCode}: NotFound error");
-
-                            break;
-                        case CommonErrorCode.InvalidData:
-                            this.Logger.Error($"Code {statusCode}: InvalidData error");
-
-                            break;
-                        case CommonErrorCode.InvalidBlueprint:
-                            this.Logger.Error($"Code {statusCode}: InvalidBlueprint error");
-
-                            break;
+                        // case CommonErrorCode.Unknown:
+                        //     this.Logger.Error($"Code {statusCode}: Unknown error");
+                        //
+                        //     break;
+                        // case CommonErrorCode.NotFound:
+                        //     this.Logger.Error($"Code {statusCode}: NotFound error");
+                        //
+                        //     break;
+                        // case CommonErrorCode.InvalidData:
+                        //     this.Logger.Error($"Code {statusCode}: InvalidData error");
+                        //
+                        //     break;
+                        // case CommonErrorCode.InvalidBlueprint:
+                        //     this.Logger.Error($"Code {statusCode}: InvalidBlueprint error");
+                        //
+                        //     break;
                         default:
-                            //In the case server return a logic error but client didn't implement that logic yet 
-                            try
+
+                            var model = JsonConvert.DeserializeObject<ErrorData>(response.DataAsText);
+
+                            if (model != null)
                             {
-                                this.Container.Resolve<IFactory<T>>().Create().ErrorProcess(statusCode);
+                                this.Container.Resolve<IFactory<T>>().Create().ErrorProcess(new ErrorData()
+                                {
+                                    Code          = model.Code,
+                                    Message       = model.Message,
+                                    Name          = model.Name,
+                                    HttpErrorCode = statusCode
+                                });
+
+                                this.Logger.Error(
+                                    $"{request.Uri} request receive error code: {statusCode}-{model.Code}-{model.Message}");
                             }
-                            catch (BaseHttpRequest.MissStatusCodeException e)
-                            {
-                                this.Logger.Error($"Didn't implement status Code: {statusCode} for {typeof(T)}");
-                                this.Logger.Exception(e);
-                            }
+
+                            // try
+                            // {
+                            //     this.Container.Resolve<IFactory<T>>().Create().ErrorProcess(statusCode);
+                            // }
+                            // catch (BaseHttpRequest.MissStatusCodeException e)
+                            // {
+                            //     this.Logger.Error($"Didn't implement status Code: {statusCode} for {typeof(T)}");
+                            //     this.Logger.Exception(e);
+                            // }
 
                             break;
                     }
@@ -90,7 +106,7 @@
             var baseHttpRequest = this.Container.Resolve<IFactory<T>>().Create();
             var data            = responseData.ToObject<TK>();
 
-            if (this.GetType().IsAssignableFrom(typeof(WrappedService)))
+            if (this.GetType().IsAssignableFrom(typeof(WrappedBestHttpService)))
             {
                 if (responseData.TryGetValue("data", out var requestProcessData))
                 {
@@ -130,16 +146,14 @@
 
                             if (errorMessage != null)
                             {
-                                this.Container.Resolve<IFactory<T>>().Create().ErrorProcess(new ErrorData()
-                                {
-                                    Code    = errorMessage.Code,
-                                    Message = errorMessage.Message
-                                });
+                                // this.Container.Resolve<IFactory<T>>().Create().ErrorProcess(new ErrorData()
+                                // {
+                                //     Code    = errorMessage.Code,
+                                //     Message = errorMessage.Message
+                                // });
 
                                 this.Logger.Error(
                                     $"{req.Uri} request receive error code: {errorMessage.Code}-{errorMessage.Message}");
-
-                                onRequestError(errorMessage.Code);
                             }
                         }
                         else
@@ -147,6 +161,8 @@
                             this.Logger.Error(
                                 $"{req.Uri}- Request finished Successfully, but the server sent an error. Status Code: {resp.StatusCode}-{resp.Message} Message: {resp.DataAsText}");
                         }
+
+                        onRequestError(resp.StatusCode);
                     }
 
                     break;

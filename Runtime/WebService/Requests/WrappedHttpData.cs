@@ -42,9 +42,10 @@ namespace GameFoundation.Scripts.Network.WebService.Requests
 
     public class ErrorData
     {
-        public int    Code    { get; set; }
-        public string Message { get; set; }
-        public string Name    { get; set; }
+        public int    HttpErrorCode { get; set; }
+        public int    Code          { get; set; }
+        public string Message       { get; set; }
+        public string Name          { get; set; }
     }
 
     public class ErrorResponse
@@ -73,7 +74,8 @@ namespace GameFoundation.Scripts.Network.WebService.Requests
             this.Code    = code;
             this.Message = message;
         }
-     [JsonProperty("statusCode")] public int    Code    { get; set; }
-     [JsonProperty("message")] public string Message { get; set; }
+
+        [JsonProperty("statusCode")] public int    Code    { get; set; }
+        [JsonProperty("message")]    public string Message { get; set; }
     }
 }

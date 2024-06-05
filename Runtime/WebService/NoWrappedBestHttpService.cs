@@ -7,7 +7,7 @@
     using Newtonsoft.Json;
     using Zenject;
 
-    public class NoWrappedService : WrappedService
+    public class NoWrappedService : WrappedBestHttpService
     {
         public NoWrappedService(ILogService logger, DiContainer container, NetworkConfig networkConfig, NetworkLocalData localData) : base(logger, container, networkConfig, localData) { }
 

@@ -16,13 +16,13 @@
     using UnityEngine;
     using Zenject;
 
-    public class WrappedService : BaseProcess, IHttpService
+    public class WrappedBestHttpService : BestBaseHttpProcess, IHttpService
     {
         protected readonly ILogService      logger;
         protected readonly NetworkConfig    networkConfig;
         protected readonly NetworkLocalData localData;
 
-        public WrappedService(ILogService logger, DiContainer container, NetworkConfig networkConfig, NetworkLocalData localData) : base(logger, container)
+        public WrappedBestHttpService(ILogService logger, DiContainer container, NetworkConfig networkConfig, NetworkLocalData localData) : base(logger, container)
         {
             this.logger        = logger;
             this.networkConfig = networkConfig;
@@ -79,11 +79,10 @@
             request.Timeout = TimeSpan.FromSeconds(this.GetHttpTimeout());
 
             this.InitPostRequest(request, httpRequestData, jwtToken);
-
             try
             {
                 this.HasInternetConnection.Value = true;
-
+            
                 return await this.MainProcess<T, TK>(request, httpRequestData);
             }
             catch (AsyncHTTPException ex)
@@ -91,7 +90,7 @@
                 this.Logger.Log($"Request {request.Uri} Error");
                 this.HasInternetConnection.Value = false;
                 this.HandleAsyncHttpException(ex);
-
+            
                 return default;
             }
         }
