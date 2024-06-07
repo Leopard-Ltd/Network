@@ -66,20 +66,39 @@
                         //     break;
                         default:
 
-                            var model = JsonConvert.DeserializeObject<ErrorData>(response.DataAsText);
+                            var model  = JsonConvert.DeserializeObject<RootErrorData>(response.DataAsText);
+                            var model1 = JsonConvert.DeserializeObject<ErrorData>(response.DataAsText);
 
-                            if (model != null)
+                            if (!string.IsNullOrEmpty(model1.Message))
                             {
                                 this.Container.Resolve<IFactory<T>>().Create().ErrorProcess(new ErrorData()
                                 {
-                                    Code          = model.Code,
-                                    Message       = model.Message,
-                                    Name          = model.Name,
-                                    HttpErrorCode = statusCode
+                                    Code                    = model1.Code,
+                                    Message                 = model1.Message,
+                                    Name                    = response.Message,
+                                    HttpErrorCode           = model1.HttpErrorCode,
+                                    HttpErrorCodeFromHeader = statusCode
                                 });
 
                                 this.Logger.Error(
-                                    $"{request.Uri} request receive error code: {statusCode}-{model.Code}-{model.Message}");
+                                    $"{request.Uri} request receive error code: {statusCode}-{model1.Code}-{model1.Message}");
+                            }
+                            else
+                            {
+                                if (model != null)
+                                {
+                                    this.Container.Resolve<IFactory<T>>().Create().ErrorProcess(new ErrorData()
+                                    {
+                                        Code                    = model.ErrorData.Code,
+                                        Message                 = model.ErrorData.Message,
+                                        Name                    = response.Message,
+                                        HttpErrorCode           = model.ErrorData.HttpErrorCode,
+                                        HttpErrorCodeFromHeader = statusCode
+                                    });
+
+                                    this.Logger.Error(
+                                        $"{request.Uri} request receive error code: {statusCode}-{model.ErrorData.Code}-{model.ErrorData.Message}");
+                                }
                             }
 
                             // try

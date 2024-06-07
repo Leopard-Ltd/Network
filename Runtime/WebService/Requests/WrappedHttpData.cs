@@ -42,10 +42,16 @@ namespace GameFoundation.Scripts.Network.WebService.Requests
 
     public class ErrorData
     {
-        public int    HttpErrorCode { get; set; }
-        public int    Code          { get; set; }
-        public string Message       { get; set; }
-        public string Name          { get; set; }
+        public int    HttpErrorCodeFromHeader { get; set; }
+        public int    HttpErrorCode           { get; set; }
+        public int    Code                    { get; set; }
+        public string Message                 { get; set; }
+        public string Name                    { get; set; }
+    }
+
+    public class RootErrorData
+    {
+        public ErrorData ErrorData { get; set; }
     }
 
     public class ErrorResponse

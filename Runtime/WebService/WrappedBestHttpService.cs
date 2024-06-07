@@ -76,7 +76,8 @@
 
             //Init request
             var request = new HTTPRequest(this.ReplaceUri(httpRequestDefinition.Route), HTTPMethods.Post);
-            request.Timeout = TimeSpan.FromSeconds(this.GetHttpTimeout());
+            request.MaxRetries = 6;
+            request.Timeout    = TimeSpan.FromSeconds(this.GetHttpTimeout());
 
             this.InitPostRequest(request, httpRequestData, jwtToken);
             try
