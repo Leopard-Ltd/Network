@@ -16,20 +16,30 @@
     using UnityEngine;
     using Zenject;
 
-    public class WrappedBestHttpService : BestBaseHttpProcess, IHttpService
+    public class WrappedBestHttpService : BestBaseHttpProcess, IHttpService, IInitializable, IDisposable
     {
-        protected readonly ILogService      logger;
-        protected readonly NetworkConfig    networkConfig;
-        protected readonly NetworkLocalData localData;
+        protected readonly ILogService                  Logger;
+        protected readonly NetworkConfig                NetworkConfig;
+        protected readonly NetworkLocalData             LocalData;
+        protected          Dictionary<HTTPMethods, int> RetryCount = new();
 
         public WrappedBestHttpService(ILogService logger, DiContainer container, NetworkConfig networkConfig, NetworkLocalData localData) : base(logger, container)
         {
-            this.logger        = logger;
-            this.networkConfig = networkConfig;
-            this.localData     = localData;
+            this.Logger        = logger;
+            this.NetworkConfig = networkConfig;
+            this.LocalData     = localData;
         }
 
-        public string Host { get; set; }
+        public virtual void Initialize()
+        {
+            this.RetryCount[HTTPMethods.Post]   = 0;
+            this.RetryCount[HTTPMethods.Get]    = 0;
+            this.RetryCount[HTTPMethods.Put]    = 0;
+            this.RetryCount[HTTPMethods.Patch]  = 0;
+            this.RetryCount[HTTPMethods.Delete] = 0;
+        }
+
+        public virtual void Dispose() { }
 
         #region Post
 
@@ -74,26 +84,9 @@
             }
 #endif
 
-            //Init request
-            var request = new HTTPRequest(this.ReplaceUri(httpRequestDefinition.Route), HTTPMethods.Post);
-            request.MaxRetries = 6;
-            request.Timeout    = TimeSpan.FromSeconds(this.GetHttpTimeout());
+            var response = await this.TryGetResponse<T, TK>(httpRequestData, httpRequestDefinition.Route, null, jwtToken, true, HTTPMethods.Post);
 
-            this.InitPostRequest(request, httpRequestData, jwtToken);
-            try
-            {
-                this.HasInternetConnection.Value = true;
-            
-                return await this.MainProcess<T, TK>(request, httpRequestData);
-            }
-            catch (AsyncHTTPException ex)
-            {
-                this.Logger.Log($"Request {request.Uri} Error");
-                this.HasInternetConnection.Value = false;
-                this.HandleAsyncHttpException(ex);
-            
-                return default;
-            }
+            return response;
         }
 
         #endregion
@@ -102,7 +95,6 @@
 
         public virtual void InitGetRequest(HTTPRequest request, object httpRequestData, string token)
         {
-            
             if (!string.IsNullOrEmpty(token))
             {
                 request.AddHeader("Authorization", "Bearer " + token);
@@ -130,39 +122,11 @@
             }
 #endif
 
-            var parameters    = new StringBuilder();
-            var propertyInfos = httpRequestData.GetType().GetProperties();
+            var parameters = this.SetParam<T, TK>(httpRequestData);
 
-            if (propertyInfos.Length > 0)
-            {
-                var parametersStr =
-                    $"?{propertyInfos.Select(propertyInfo => typeof(IEnumerable<string>).IsAssignableFrom(propertyInfo.PropertyType) ? (propertyInfo.GetValue(httpRequestData) as IEnumerable<string>)?.Select(value => $"{propertyInfo.Name}={value}").Join("&") : $"{propertyInfo.Name}={propertyInfo.GetValue(httpRequestData)}").Join("&")}";
+            var response = await this.TryGetResponse<T, TK>(httpRequestData, httpRequestDefinition.Route, parameters, jwtToken, includeBody, HTTPMethods.Get);
 
-                parameters.Append(parametersStr);
-            }
-
-            var httpRequest = new HTTPRequest(this.ReplaceUri($"{httpRequestDefinition.Route}{parameters}"), HTTPMethods.Get);
-            httpRequest.Timeout = TimeSpan.FromSeconds(this.GetHttpTimeout());
-
-            if (includeBody)
-            {
-                this.InitGetRequest(httpRequest, httpRequestData, jwtToken);
-            }
-
-            try
-            {
-                this.HasInternetConnection.Value = true;
-
-                return await this.MainProcess<T, TK>(httpRequest, httpRequestData);
-            }
-            catch (AsyncHTTPException ex)
-            {
-                this.Logger.Log($"Request {httpRequest.Uri} Error");
-                this.HasInternetConnection.Value = false;
-                this.HandleAsyncHttpException(ex);
-
-                return default;
-            }
+            return response;
         }
 
         #endregion
@@ -198,39 +162,11 @@
             }
 #endif
 
-            var parameters    = new StringBuilder();
-            var propertyInfos = httpRequestData.GetType().GetProperties();
+            var parameters = this.SetParam<T, TK>(httpRequestData);
 
-            if (propertyInfos.Length > 0)
-            {
-                var parametersStr =
-                    $"?{propertyInfos.Select(propertyInfo => typeof(IEnumerable<string>).IsAssignableFrom(propertyInfo.PropertyType) ? (propertyInfo.GetValue(httpRequestData) as IEnumerable<string>)?.Select(value => $"{propertyInfo.Name}={value}").Join("&") : $"{propertyInfo.Name}={propertyInfo.GetValue(httpRequestData)}").Join("&")}";
+            var response = await this.TryGetResponse<T, TK>(httpRequestData, httpRequestDefinition.Route, parameters, jwtToken, includeBody, HTTPMethods.Put);
 
-                parameters.Append(parametersStr);
-            }
-
-            var httpRequest = new HTTPRequest(this.ReplaceUri($"{httpRequestDefinition.Route}{parameters}"), HTTPMethods.Put);
-            httpRequest.Timeout = TimeSpan.FromSeconds(this.GetHttpTimeout());
-
-            if (includeBody)
-            {
-                this.InitRequestPut(httpRequest, httpRequestData, jwtToken);
-            }
-
-            try
-            {
-                this.HasInternetConnection.Value = true;
-
-                return await this.MainProcess<T, TK>(httpRequest, httpRequestData);
-            }
-            catch (AsyncHTTPException ex)
-            {
-                this.Logger.Log($"Request {httpRequest.Uri} Error");
-                this.HasInternetConnection.Value = false;
-                this.HandleAsyncHttpException(ex);
-
-                return default;
-            }
+            return response;
         }
 
         #endregion
@@ -266,39 +202,11 @@
             }
 #endif
 
-            var parameters    = new StringBuilder();
-            var propertyInfos = httpRequestData.GetType().GetProperties();
+            var parameters = this.SetParam<T, TK>(httpRequestData);
 
-            if (propertyInfos.Length > 0)
-            {
-                var parametersStr =
-                    $"?{propertyInfos.Select(propertyInfo => typeof(IEnumerable<string>).IsAssignableFrom(propertyInfo.PropertyType) ? (propertyInfo.GetValue(httpRequestData) as IEnumerable<string>)?.Select(value => $"{propertyInfo.Name}={value}").Join("&") : $"{propertyInfo.Name}={propertyInfo.GetValue(httpRequestData)}").Join("&")}";
+            var response = await this.TryGetResponse<T, TK>(httpRequestData, httpRequestDefinition.Route, parameters, jwtToken, includeBody, HTTPMethods.Patch);
 
-                parameters.Append(parametersStr);
-            }
-
-            var httpRequest = new HTTPRequest(this.ReplaceUri($"{httpRequestDefinition.Route}{parameters}"), HTTPMethods.Patch);
-            httpRequest.Timeout = TimeSpan.FromSeconds(this.GetHttpTimeout());
-
-            if (includeBody)
-            {
-                this.InitRequestPatch(httpRequest, httpRequestData, jwtToken);
-            }
-
-            try
-            {
-                this.HasInternetConnection.Value = true;
-
-                return await this.MainProcess<T, TK>(httpRequest, httpRequestData);
-            }
-            catch (AsyncHTTPException ex)
-            {
-                this.Logger.Log($"Request {httpRequest.Uri} Error");
-                this.HasInternetConnection.Value = false;
-                this.HandleAsyncHttpException(ex);
-
-                return default;
-            }
+            return response;
         }
 
         #endregion
@@ -334,44 +242,15 @@
             }
 #endif
 
-            var parameters    = new StringBuilder();
-            var propertyInfos = httpRequestData.GetType().GetProperties();
+            var parameters = this.SetParam<T, TK>(httpRequestData);
 
-            if (propertyInfos.Length > 0)
-            {
-                var parametersStr =
-                    $"?{propertyInfos.Select(propertyInfo => typeof(IEnumerable<string>).IsAssignableFrom(propertyInfo.PropertyType) ? (propertyInfo.GetValue(httpRequestData) as IEnumerable<string>)?.Select(value => $"{propertyInfo.Name}={value}").Join("&") : $"{propertyInfo.Name}={propertyInfo.GetValue(httpRequestData)}").Join("&")}";
+            var response = await this.TryGetResponse<T, TK>(httpRequestData, httpRequestDefinition.Route, parameters, jwtToken, includeBody, HTTPMethods.Delete);
 
-                parameters.Append(parametersStr);
-            }
-
-            var httpRequest = new HTTPRequest(this.ReplaceUri($"{httpRequestDefinition.Route}{parameters}"), HTTPMethods.Delete);
-            httpRequest.Timeout = TimeSpan.FromSeconds(this.GetHttpTimeout());
-
-            if (includeBody)
-            {
-                this.InitDeleteRequest(httpRequest, httpRequestData, jwtToken);
-            }
-
-            try
-            {
-                this.HasInternetConnection.Value = true;
-
-                return await this.MainProcess<T, TK>(httpRequest, httpRequestData);
-            }
-            catch (AsyncHTTPException ex)
-            {
-                this.Logger.Log($"Request {httpRequest.Uri} Error");
-                this.HasInternetConnection.Value = false;
-                this.HandleAsyncHttpException(ex);
-
-                return default;
-            }
+            return response;
         }
 
         #endregion
 
-        //TODO need to test and improve code here, this is just a temporary logic
         /// <summary>
         /// Temporary logic for download, streaming data
         /// </summary>
@@ -399,11 +278,11 @@
                 case HTTPRequestStates.Finished:
                     if (response.IsSuccess)
                     {
-                        this.Logger.Log($"Download {filePath} Done!");
+                        base.Logger.Log($"Download {filePath} Done!");
                     }
                     else
                     {
-                        this.Logger.Warning(string.Format(
+                        base.Logger.Warning(string.Format(
                             "Request finished Successfully, but the server sent an error. Status Code: {0}-{1} Message: {2}",
                             response.StatusCode, response.Message,
                             response.DataAsText));
@@ -459,16 +338,123 @@
 
         public string GetDownloadPath(string path) => $"{Application.persistentDataPath}/{path}";
 
-        protected double GetHttpTimeout() => this.networkConfig.HttpRequestTimeout;
+        protected double GetHttpTimeout() => this.NetworkConfig.HttpRequestTimeout;
 
-        protected double GetDownloadTimeout() => this.networkConfig.DownloadRequestTimeout;
+        protected double GetDownloadTimeout() => this.NetworkConfig.DownloadRequestTimeout;
 
-        public BoolReactiveProperty HasInternetConnection                                        { get; set; } = new(true);
-        public void                 InitPostRequest(HTTPRequest request, object httpRequestData) { throw new NotImplementedException(); }
+        public BoolReactiveProperty HasInternetConnection { get; set; } = new(true);
+        public string               Host                  { get; set; }
+
+        private StringBuilder SetParam<T, TK>(object httpRequestData) where T : BaseHttpRequest<TK>
+        {
+            var parameters    = new StringBuilder();
+            var propertyInfos = httpRequestData.GetType().GetProperties();
+
+            if (propertyInfos.Length > 0)
+            {
+                var parametersStr =
+                    $"{this.NetworkConfig.ParamDelimiter}{propertyInfos.Select(propertyInfo => typeof(IEnumerable<string>).IsAssignableFrom(propertyInfo.PropertyType) ? (propertyInfo.GetValue(httpRequestData) as IEnumerable<string>)?.Select(value => $"{propertyInfo.Name}={value}").Join(this.NetworkConfig.ParamLink) : $"{propertyInfo.Name}={propertyInfo.GetValue(httpRequestData)}").Join(this.NetworkConfig.ParamLink)}";
+
+                parameters.Append(parametersStr);
+            }
+
+            return parameters;
+        }
+
+        private async UniTask<TK> TryGetResponse<T, TK>(object httpRequestData, string route, StringBuilder parameters, string jwtToken, bool includeBody, HTTPMethods methods)
+            where T : BaseHttpRequest<TK>
+        {
+            this.RetryCount[methods] = 0;
+            var response = default(TK);
+            var request  = default(HTTPRequest);
+            var canRetry = true;
+
+            while (canRetry && response == null && this.RetryCount[methods] < this.NetworkConfig.MaximumRetryStatusCode0)
+            {
+                try
+                {
+                    request         = new HTTPRequest(this.ReplaceUri($"{route}{parameters}"), methods);
+                    request.Timeout = TimeSpan.FromSeconds(this.GetHttpTimeout());
+
+                    if (includeBody)
+                    {
+                        switch (methods)
+                        {
+                            case HTTPMethods.Get:
+                                this.InitGetRequest(request, httpRequestData, jwtToken);
+
+                                break;
+                            case HTTPMethods.Post:
+                                this.InitPostRequest(request, httpRequestData, jwtToken);
+
+                                break;
+                            case HTTPMethods.Put:
+                                this.InitRequestPut(request, httpRequestData, jwtToken);
+
+                                break;
+                            case HTTPMethods.Patch:
+                                this.InitRequestPatch(request, httpRequestData, jwtToken);
+
+                                break;
+                            case HTTPMethods.Head:
+                                break;
+                            case HTTPMethods.Delete:
+                                this.InitDeleteRequest(request, httpRequestData, jwtToken);
+
+                                break;
+                            case HTTPMethods.Merge:
+                                break;
+                            case HTTPMethods.Options:
+                                break;
+                            case HTTPMethods.Connect:
+                                break;
+                            default:
+                                throw new ArgumentOutOfRangeException(nameof(methods), methods, null);
+                        }
+                    }
+
+                    this.HasInternetConnection.Value = true;
+
+                    response = await this.MainProcess<T, TK>(request, httpRequestData);
+                    canRetry = false;
+                }
+                catch (AsyncHTTPException ex)
+                {
+                    if (ex.StatusCode == 0)
+                    {
+                        if (!this.NetworkConfig.AllowRetry)
+                        {
+                            this.RetryCount[methods] = this.NetworkConfig.MaximumRetryStatusCode0;
+                        }
+                        else
+                        {
+                            this.RetryCount[methods]++;
+                            this.HasInternetConnection.Value = true;
+                            this.Logger.LogWithColor($"Retry {this.RetryCount[methods]} for request {request.Uri} Error detail:{ex.Message}, {ex.StatusCode}, {ex.Content}", Color.cyan);
+                        }
+
+                        if (this.RetryCount[methods] >= this.NetworkConfig.MaximumRetryStatusCode0)
+                        {
+                            base.Logger.Log($"Request {request.Uri} Error");
+                            this.HasInternetConnection.Value = false;
+                            this.HandleAsyncHttpException(ex);
+                        }
+                    }
+                    else
+                    {
+                        canRetry = false;
+                    }
+
+                    await UniTask.Delay(TimeSpan.FromSeconds(this.NetworkConfig.RetryDelay));
+                }
+            }
+
+            return response;
+        }
 
         protected Uri ReplaceUri(string route)
         {
-            foreach (var keyValuePair in this.localData.ServerToken.ParameterNameToValue)
+            foreach (var keyValuePair in this.LocalData.ServerToken.ParameterNameToValue)
             {
                 var parameterName  = keyValuePair.Key;
                 var parameterValue = keyValuePair.Value;

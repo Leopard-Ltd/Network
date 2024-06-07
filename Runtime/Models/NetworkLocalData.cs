@@ -12,7 +12,6 @@
 
     public class ServerToken
     {
-        public string                     JwtToken             { get; set; }
         public Dictionary<string, string> ParameterNameToValue { get; set; } = new();
     }
 }
