@@ -331,11 +331,17 @@
             where T : BaseHttpRequest<TK>
         {
             this.RetryCount[methods] = 0;
-            var response = default(TK);
-            var request  = default(HTTPRequest);
-            var canRetry = true;
+            var response     = default(TK);
+            var request      = default(HTTPRequest);
+            var canRetry     = true;
+            var maximumRetry = this.NetworkConfig.MaximumRetryStatusCode0;
 
-            while (canRetry && response == null && this.RetryCount[methods] < this.NetworkConfig.MaximumRetryStatusCode0)
+            if (Attribute.GetCustomAttribute(typeof(T), typeof(RetryAttribute)) is RetryAttribute retryAttribute)
+            {
+                maximumRetry = retryAttribute.RetryCount;
+            }
+
+            while (canRetry && response == null && this.RetryCount[methods] < maximumRetry)
             {
                 try
                 {
@@ -390,7 +396,7 @@
                     {
                         if (!this.NetworkConfig.AllowRetry)
                         {
-                            this.RetryCount[methods] = this.NetworkConfig.MaximumRetryStatusCode0;
+                            this.RetryCount[methods] = maximumRetry;
                         }
                         else
                         {
@@ -399,7 +405,7 @@
                             this.Logger.LogWithColor($"Retry {this.RetryCount[methods]} for request {request.Uri} Error detail:{ex.Message}, {ex.StatusCode}, {ex.Content}", Color.cyan);
                         }
 
-                        if (this.RetryCount[methods] >= this.NetworkConfig.MaximumRetryStatusCode0)
+                        if (this.RetryCount[methods] >= maximumRetry)
                         {
                             base.Logger.Log($"Request {request.Uri} Error");
                             this.HasInternetConnection.Value = false;

@@ -5,17 +5,17 @@ namespace GameFoundation.Scripts.Network.WebService.Requests
 
     public class WrappedHttpRequestData<T> : WrappedHttpRequestData
     {
-        public new T Data { get; set; }
+        [JsonProperty("data")] public new T Data { get; set; }
     }
 
     public class WrappedHttpResponseData<T> : WrappedHttpResponseData
     {
-        public new T Data { get; set; }
+        [JsonProperty("data")] public new T Data { get; set; }
     }
 
     public class WrappedHttpRequestData
     {
-        public object Data { get; set; }
+        [JsonProperty("data")] public object Data { get; set; }
     }
 
     /// <summary>
@@ -24,8 +24,8 @@ namespace GameFoundation.Scripts.Network.WebService.Requests
     /// </summary>
     public class WrappedHttpResponseData
     {
-        public object                   Data     { get; set; }
-        public Dictionary<string, long> Currency { get; set; } = new();
+        [JsonProperty("data")] public object                   Data     { get; set; }
+        public                        Dictionary<string, long> Currency { get; set; } = new();
     }
 
     public static class CommonErrorCode
