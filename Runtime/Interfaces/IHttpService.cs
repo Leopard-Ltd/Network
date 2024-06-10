@@ -33,6 +33,7 @@ namespace GameFoundation.Scripts.Network.WebService
         string GetDownloadPath(string path);
 
         BoolReactiveProperty HasInternetConnection { get; set; }
+        BoolReactiveProperty IsProcessApi          { get; set; }
     }
 
     /// <summary>Download progress delegate.</summary>
@@ -51,12 +52,9 @@ namespace GameFoundation.Scripts.Network.WebService
             //throw new MissStatusCodeException();
         }
 
-        public virtual void ErrorProcess(ErrorData errorData)
+        public virtual void ErrorProcess(object errorData)
         {
-            // process common code
-            switch (errorData.Code)
-            {
-            }
+            
         }
 
         public virtual void PredictProcess(object requestData) { }

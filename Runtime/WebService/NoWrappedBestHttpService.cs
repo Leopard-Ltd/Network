@@ -1,31 +1,15 @@
 ﻿namespace GameFoundation.Scripts.Network.WebService
 {
-    using System.Collections.Generic;
-    using System.Linq;
     using System.Text;
-    using BestHTTP;
     using GameFoundation.Scripts.Utilities.LogService;
     using global::Models;
-    using ModestTree;
-    using Newtonsoft.Json;
     using Zenject;
 
-    public class NoWrappedService : WrappedBestHttpService
+    public class NoWrappedRequestAndResponseService : BestBaseHttpProcess
     {
-        public NoWrappedService(ILogService logger, DiContainer container, NetworkConfig networkConfig, NetworkLocalData localData) : base(logger, container, networkConfig, localData) { }
-
-        protected override void InitBaseRequest(HTTPRequest request, object httpRequestData, string token)
+        public NoWrappedRequestAndResponseService(ILogService logger, NetworkLocalData LocalData, NetworkConfig networkConfig, DiContainer container) : base(logger, LocalData, networkConfig,
+            container)
         {
-            if (!string.IsNullOrEmpty(token))
-            {
-                request.AddHeader("Authorization", "Bearer " + token);
-            }
-            if (!string.IsNullOrEmpty(GameVersion.Version))
-            {
-                request.AddHeader("game-version", GameVersion.Version);
-            }
-            request.AddHeader("Content-Type", "application/json");
-            request.RawData = Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(httpRequestData));
         }
 
         protected override StringBuilder SetParam<T, TK>(object httpRequestData)

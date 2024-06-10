@@ -40,20 +40,6 @@ namespace GameFoundation.Scripts.Network.WebService.Requests
         public const int InternalServerError = 500;
     }
 
-    public class ErrorData
-    {
-        public int    HttpErrorCodeFromHeader { get; set; }
-        public int    HttpErrorCode           { get; set; }
-        public int    Code                    { get; set; }
-        public string Message                 { get; set; }
-        public string Name                    { get; set; }
-    }
-
-    public class RootErrorData
-    {
-        public ErrorData ErrorData { get; set; }
-    }
-
     public class ErrorResponse
     {
         public const int AUTH_ERROR_CODE_USER_ID_INVALID        = 1;
