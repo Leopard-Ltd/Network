@@ -41,9 +41,7 @@
 
         public virtual void Dispose() { }
 
-        #region Post
-
-        public virtual void InitPostRequest(HTTPRequest request, object httpRequestData, string token)
+        protected virtual void InitBaseRequest(HTTPRequest request, object httpRequestData, string token)
         {
             using (var wrappedData = this.Container.Resolve<IFactory<ClientWrappedHttpRequestData>>().Create())
             {
@@ -65,6 +63,10 @@
                 request.RawData = Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(wrappedData));
             }
         }
+
+        #region Post
+
+        public virtual void InitPostRequest(HTTPRequest request, object httpRequestData, string token) { this.InitBaseRequest(request, httpRequestData, token); }
 
         public virtual async UniTask<TK> SendPostAsync<T, TK>(object httpRequestData = null, string jwtToken = "") where T : BasePostRequest<TK>
         {
@@ -93,16 +95,7 @@
 
         #region Get
 
-        public virtual void InitGetRequest(HTTPRequest request, object httpRequestData, string token)
-        {
-            if (!string.IsNullOrEmpty(token))
-            {
-                request.AddHeader("Authorization", "Bearer " + token);
-            }
-
-            request.AddHeader("Content-Type", "application/json");
-            request.RawData = Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(httpRequestData));
-        }
+        public virtual void InitGetRequest(HTTPRequest request, object httpRequestData, string token) { this.InitBaseRequest(request, httpRequestData, token); }
 
         public virtual async UniTask<TK> SendGetAsync<T, TK>(object httpRequestData = null, string jwtToken = "", bool includeBody = true) where T : BaseGetRequest<TK>
         {
@@ -133,16 +126,7 @@
 
         #region Put
 
-        public virtual void InitRequestPut(HTTPRequest request, object httpRequestData, string token)
-        {
-            if (!string.IsNullOrEmpty(token))
-            {
-                request.AddHeader("Authorization", "Bearer " + token);
-            }
-
-            request.AddHeader("Content-Type", "application/json");
-            request.RawData = Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(httpRequestData));
-        }
+        public virtual void InitRequestPut(HTTPRequest request, object httpRequestData, string token) { this.InitBaseRequest(request, httpRequestData, token); }
 
         public async UniTask<TK> SendPutAsync<T, TK>(object httpRequestData = null, string jwtToken = "", bool includeBody = false) where T : BasePutRequest<TK>
         {
@@ -173,16 +157,7 @@
 
         #region Pacth
 
-        public virtual void InitRequestPatch(HTTPRequest request, object httpRequestData, string token)
-        {
-            if (!string.IsNullOrEmpty(token))
-            {
-                request.AddHeader("Authorization", "Bearer " + token);
-            }
-
-            request.AddHeader("Content-Type", "application/json");
-            request.RawData = Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(httpRequestData));
-        }
+        public virtual void InitRequestPatch(HTTPRequest request, object httpRequestData, string token) { this.InitBaseRequest(request, httpRequestData, token); }
 
         public async UniTask<TK> SendPatchAsync<T, TK>(object httpRequestData = null, string jwtToken = "", bool includeBody = true) where T : BasePatchRequest<TK>
         {
@@ -213,16 +188,7 @@
 
         #region Delete
 
-        public virtual void InitDeleteRequest(HTTPRequest request, object httpRequestData, string token)
-        {
-            if (!string.IsNullOrEmpty(token))
-            {
-                request.AddHeader("Authorization", "Bearer " + token);
-            }
-
-            request.AddHeader("Content-Type", "application/json");
-            request.RawData = Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(httpRequestData));
-        }
+        public virtual void InitDeleteRequest(HTTPRequest request, object httpRequestData, string token) { this.InitBaseRequest(request, httpRequestData, token); }
 
         public virtual async UniTask<TK> SendDeleteAsync<T, TK>(object httpRequestData = null, string jwtToken = "", bool includeBody = true) where T : BaseDeleteRequest<TK>
         {
@@ -345,7 +311,7 @@
         public BoolReactiveProperty HasInternetConnection { get; set; } = new(true);
         public string               Host                  { get; set; }
 
-        private StringBuilder SetParam<T, TK>(object httpRequestData) where T : BaseHttpRequest<TK>
+        protected virtual StringBuilder SetParam<T, TK>(object httpRequestData) where T : BaseHttpRequest<TK>
         {
             var parameters    = new StringBuilder();
             var propertyInfos = httpRequestData.GetType().GetProperties();

@@ -1,7 +1,6 @@
 namespace GameFoundation.Scripts.Network.WebService
 {
     using System;
-    using BestHTTP;
     using Cysharp.Threading.Tasks;
     using GameFoundation.Scripts.Network.Signal;
     using GameFoundation.Scripts.Network.WebService.Requests;

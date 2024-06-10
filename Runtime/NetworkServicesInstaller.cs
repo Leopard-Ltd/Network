@@ -24,7 +24,11 @@ namespace GameFoundation.Scripts.Network
             this.Container.BindIFactoryForAllDriveTypeFromPool<BaseHttpRequest>();
             this.Container.BindIFactory<ClientWrappedHttpRequestData>().FromPoolableMemoryPool();
             this.Container.DeclareSignal<MissStatusCodeSignal>();
+
+            var wrapData = this.Container.Instantiate<WrappedBestHttpService>();
+            this.Container.Bind(typeof(IDisposable), typeof(IInitializable), typeof(IHttpService)).WithId("wrap").To<WrappedBestHttpService>().FromInstance(wrapData).AsCached();
             var noWrapHttpService = this.Container.Instantiate<NoWrappedService>();
+
             this.Container.Bind(typeof(IDisposable), typeof(IInitializable), typeof(IHttpService)).To<NoWrappedService>().FromInstance(noWrapHttpService).AsCached();
         }
 
