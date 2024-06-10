@@ -33,6 +33,7 @@ namespace GameFoundation.Scripts.Network.WebService
         string GetDownloadPath(string path);
 
         BoolReactiveProperty HasInternetConnection { get; set; }
+        BoolReactiveProperty IsProcessApi          { get; set; }
     }
 
     /// <summary>Download progress delegate.</summary>

@@ -26,17 +26,29 @@ namespace GameFoundation.Scripts.Network
             this.Container.DeclareSignal<MissStatusCodeSignal>();
 
             var wrapData = this.Container.Instantiate<WrappedBestHttpService>();
-            this.Container.Bind(typeof(IDisposable), typeof(IInitializable), typeof(IHttpService)).WithId("wrap").To<WrappedBestHttpService>().FromInstance(wrapData).AsCached();
-            var noWrapHttpService = this.Container.Instantiate<NoWrappedService>();
+            wrapData.Host = this.networkConfig.Host;
+            this.Container.Bind(typeof(IDisposable), typeof(IInitializable), typeof(IHttpService)).WithId(NetworkConfig.WrapFull).To<WrappedBestHttpService>().FromInstance(wrapData).AsCached();
+            var noWrapHttpService = this.Container.Instantiate<NoWrappedRequestAndResponseService>();
+            noWrapHttpService.Host = this.networkConfig.Host;
+            this.Container.Bind(typeof(IDisposable), typeof(IInitializable), typeof(IHttpService)).To<NoWrappedRequestAndResponseService>().FromInstance(noWrapHttpService).AsCached();
+            var wrapRequestNoResponse = this.Container.Instantiate<WrappedRequestNoResponseHttpServices>();
+            wrapRequestNoResponse.Host = this.networkConfig.Host;
 
-            this.Container.Bind(typeof(IDisposable), typeof(IInitializable), typeof(IHttpService)).To<NoWrappedService>().FromInstance(noWrapHttpService).AsCached();
+            this.Container.Bind(typeof(IDisposable), typeof(IInitializable), typeof(IHttpService)).WithId(NetworkConfig.WrapRequest).To<WrappedRequestNoResponseHttpServices>().FromInstance(wrapRequestNoResponse)
+                .AsCached();
+
+            var wrapResponseNoRequest = this.Container.Instantiate<WrappedResponseNoRequestHttpServices>();
+            wrapResponseNoRequest.Host = this.networkConfig.Host;
+
+            this.Container.Bind(typeof(IDisposable), typeof(IInitializable), typeof(IHttpService)).WithId(NetworkConfig.WrapResponse).To<WrappedResponseNoRequestHttpServices>()
+                .FromInstance(wrapResponseNoRequest).AsCached();
         }
 
         private async void BindNetworkSetting()
         {
             var localDataServices = this.Container.Resolve<IHandleUserDataServices>();
-            var soundData         = await localDataServices.Load<NetworkLocalData>();
-            this.Container.Bind<NetworkLocalData>().FromInstance(soundData).AsCached().NonLazy();
+            var networkLocalData         = await localDataServices.Load<NetworkLocalData>();
+            this.Container.Bind<NetworkLocalData>().FromInstance(networkLocalData).AsCached().NonLazy();
         }
     }
 }
