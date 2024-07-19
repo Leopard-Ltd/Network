@@ -1,7 +1,7 @@
 namespace GameFoundation.Scripts.Network.Websocket
 {
     using System.Threading.Tasks;
-    using UniRx;
+    using R3;
 
     public enum ServiceStatus
     {
@@ -13,7 +13,7 @@ namespace GameFoundation.Scripts.Network.Websocket
 
     public interface IWebSocketService
     {
-        public ReactiveProperty<ServiceStatus> State { get;}
+        public ReactiveProperty<ServiceStatus> State { get; }
 
         Task OpenConnection();
 

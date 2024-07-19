@@ -7,7 +7,7 @@ namespace GameFoundation.Scripts.Network.Websocket
     using BestHTTP.SignalRCore.Encoders;
     using GameFoundation.Scripts.Utilities.LogService;
     using global::Models;
-    using UniRx;
+    using R3;
 
     /// <summary>Temporary websocket service (signalR) for battle.</summary>
     public class BestHttpWebsocketService : IWebSocketService

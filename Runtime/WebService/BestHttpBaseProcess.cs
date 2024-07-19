@@ -11,12 +11,12 @@
     using GameFoundation.Scripts.Utilities.LogService;
     using GameFoundation.Scripts.Utilities.Utils;
     using global::Models;
-    using ModestTree;
     using Newtonsoft.Json;
     using Newtonsoft.Json.Linq;
-    using UniRx;
+    using R3;
     using UnityEngine;
     using Zenject;
+    using Zenject.Internal;
 
     public abstract class BestBaseHttpProcess : IHttpService, IInitializable, IDisposable
     {
@@ -343,9 +343,9 @@
 
         protected double GetDownloadTimeout() => this.NetworkConfig.DownloadRequestTimeout;
 
-        public BoolReactiveProperty HasInternetConnection { get; set; } = new(true);
-        public BoolReactiveProperty IsProcessApi          { get; set; } = new(false);
-        public string               Host                  { get; set; }
+        public ReactiveProperty<bool> HasInternetConnection { get; set; } = new(true);
+        public ReactiveProperty<bool> IsProcessApi          { get; set; } = new(false);
+        public string                 Host                  { get; set; }
 
         protected virtual StringBuilder SetParam<T, TK>(object httpRequestData) where T : BaseHttpRequest<TK>
         {

@@ -22,7 +22,7 @@ namespace GameFoundation.Scripts.Network
 
             // Pooling for http request object, transfer data object
             this.Container.BindIFactoryForAllDriveTypeFromPool<BaseHttpRequest>();
-            this.Container.BindIFactory<ClientWrappedHttpRequestData>().FromPoolableMemoryPool();
+            this.Container.BindIFactory<ClientWrappedHttpRequestData>();
             this.Container.DeclareSignal<MissStatusCodeSignal>();
 
             var wrapData = this.Container.Instantiate<WrappedBestHttpService>();

@@ -4,6 +4,7 @@ namespace GameFoundation.Scripts.Network.WebService
     using GameFoundation.Scripts.Network.WebService.Requests;
     using Newtonsoft.Json;
     using Zenject;
+    using Zenject.Internal;
 
     public class ClientWrappedHttpRequestData : WrappedHttpRequestData, IPoolable<IMemoryPool>, IDisposable
     {

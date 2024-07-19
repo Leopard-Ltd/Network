@@ -9,7 +9,10 @@
         "GameFoundation.Script",
         "UniTask",
         "Zenject-Source",
-        "Zenject-Signals"
+        "Zenject-Signals",
+        "Zenject",
+        "MessagePipe",
+        "MessagePipe.Zenject"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],

@@ -5,8 +5,9 @@ namespace GameFoundation.Scripts.Network.WebService
     using GameFoundation.Scripts.Network.Signal;
     using GameFoundation.Scripts.Network.WebService.Requests;
     using GameFoundation.Scripts.Utilities.LogService;
-    using UniRx;
+    using R3;
     using Zenject;
+    using Zenject.Internal;
 
     /// <summary>Provide a way to send http request, download content.</summary>
     public interface IHttpService
@@ -32,8 +33,8 @@ namespace GameFoundation.Scripts.Network.WebService
         /// <summary>Return the real download path.</summary>
         string GetDownloadPath(string path);
 
-        BoolReactiveProperty HasInternetConnection { get; set; }
-        BoolReactiveProperty IsProcessApi          { get; set; }
+        ReactiveProperty<bool> HasInternetConnection { get; set; }
+        ReactiveProperty<bool> IsProcessApi          { get; set; }
     }
 
     /// <summary>Download progress delegate.</summary>
