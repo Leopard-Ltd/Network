@@ -105,7 +105,7 @@ namespace GameFoundation.Scripts.Network.WebService
 
         protected BaseHttpRequest(ILogService logger) { this.Logger = logger; }
 
-        public void Dispose()                   { this.pool.Despawn(this); }
+        public void Dispose()                   { this.pool?.Despawn(this); }
         public void OnDespawned()               { this.Logger.Log($"spawned {this}"); }
         public void OnSpawned(IMemoryPool pool) { this.pool = pool; }
 

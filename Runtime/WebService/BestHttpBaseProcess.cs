@@ -583,7 +583,7 @@
         protected virtual TK RequestSuccessProcess<T, TK>(JObject responseData, object requestData)
             where T : BaseHttpRequest, IDisposable
         {
-            var baseHttpRequest = this.Container.Resolve<IFactory<T>>().Create();
+            var baseHttpRequest = this.Container.Resolve<T>();
             var data            = responseData.ToObject<TK>();
 
             if (this is IWrapResponse wrapResponse)

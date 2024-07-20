@@ -21,7 +21,7 @@ namespace GameFoundation.Scripts.Network
             this.BindNetworkSetting();
 
             // Pooling for http request object, transfer data object
-            this.Container.BindIFactoryForAllDriveTypeFromPool<BaseHttpRequest>();
+            this.Container.BindInterfacesAndSelfToAllTypeDriveFrom<BaseHttpRequest>();
             this.Container.BindIFactory<ClientWrappedHttpRequestData>();
             this.Container.DeclareSignal<MissStatusCodeSignal>();
 
