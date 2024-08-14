@@ -8,7 +8,6 @@
     using BestHTTP;
     using Cysharp.Threading.Tasks;
     using GameFoundation.Scripts.Network.WebService.Requests;
-    using GameFoundation.Scripts.Utilities.LogService;
     using GameFoundation.Scripts.Utilities.Utils;
     using global::Models;
     using ModestTree;
@@ -20,12 +19,12 @@
 
     public abstract class BestBaseHttpProcess : IHttpService, IInitializable, IDisposable
     {
-        protected readonly ILogService      Logger; // wrapped log 
+        private readonly   WrapLogger       Logger;
         protected readonly NetworkLocalData LocalData;
         protected readonly NetworkConfig    NetworkConfig;
         protected readonly DiContainer      Container; // zenject container of this
 
-        protected BestBaseHttpProcess(ILogService logger, NetworkLocalData LocalData, NetworkConfig networkConfig, DiContainer container)
+        protected BestBaseHttpProcess(WrapLogger logger, NetworkLocalData LocalData, NetworkConfig networkConfig, DiContainer container)
         {
             this.Logger        = logger;
             this.LocalData     = LocalData;

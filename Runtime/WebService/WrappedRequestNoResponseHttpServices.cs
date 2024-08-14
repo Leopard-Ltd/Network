@@ -1,12 +1,11 @@
 ﻿namespace GameFoundation.Scripts.Network.WebService
 {
-    using GameFoundation.Scripts.Utilities.LogService;
     using global::Models;
     using Zenject;
 
     public class WrappedRequestNoResponseHttpServices : BestBaseHttpProcess, IWrapRequest
     {
-        public WrappedRequestNoResponseHttpServices(ILogService logger, NetworkLocalData LocalData, NetworkConfig networkConfig, DiContainer container) : base(logger, LocalData, networkConfig,
+        public WrappedRequestNoResponseHttpServices(WrapLogger wrapLogger, NetworkLocalData LocalData, NetworkConfig networkConfig, DiContainer container) : base(wrapLogger, LocalData, networkConfig,
             container)
         {
         }
