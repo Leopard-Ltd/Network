@@ -3,7 +3,6 @@ namespace GameFoundation.Scripts.Network.WebService
     using System;
     using Cysharp.Threading.Tasks;
     using GameFoundation.Scripts.Network.Signal;
-    using GameFoundation.Scripts.Network.WebService.Requests;
     using GameFoundation.Scripts.Utilities.LogService;
     using UniRx;
     using Zenject;
@@ -52,10 +51,7 @@ namespace GameFoundation.Scripts.Network.WebService
             //throw new MissStatusCodeException();
         }
 
-        public virtual void ErrorProcess(object errorData)
-        {
-            
-        }
+        public virtual void ErrorProcess(object errorData) { }
 
         public virtual void PredictProcess(object requestData) { }
 

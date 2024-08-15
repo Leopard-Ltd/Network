@@ -439,7 +439,7 @@
                         {
                             this.RetryCount[methods]++;
                             this.HasInternetConnection.Value = true;
-                            this.Logger.LogWithColor($"Retry {this.RetryCount[methods]} for request {request.Uri} Error detail:{ex.Message}, {ex.StatusCode}, {ex.Content}", Color.cyan);
+                            this.Logger.LogWithColor($"Retry {this.RetryCount[methods]}/ {maximumRetry} for request {request.Uri} Error detail:{ex.Message}, {ex.StatusCode}, {ex.Content}", Color.cyan);
                         }
 
                         if (this.RetryCount[methods] >= maximumRetry)
@@ -509,28 +509,9 @@
                 {
                     switch (statusCode)
                     {
-                        // case CommonErrorCode.Unknown:
-                        //     this.Logger.Error($"Code {statusCode}: Unknown error");
-                        //
-                        //     break;
-                        // case CommonErrorCode.NotFound:
-                        //     this.Logger.Error($"Code {statusCode}: NotFound error");
-                        //
-                        //     break;
-                        // case CommonErrorCode.InvalidData:
-                        //     this.Logger.Error($"Code {statusCode}: InvalidData error");
-                        //
-                        //     break;
-                        // case CommonErrorCode.InvalidBlueprint:
-                        //     this.Logger.Error($"Code {statusCode}: InvalidBlueprint error");
-                        //
-                        //     break;
                         default:
 
                             this.Container.Resolve<IFactory<T>>().Create().ErrorProcess(response.DataAsText);
-                            this.Logger.Error(
-                                $"{response.DataAsText}");
-                           
 
                             break;
                     }
