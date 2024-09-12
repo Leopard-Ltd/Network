@@ -5,7 +5,9 @@
     using System.IO;
     using System.Linq;
     using System.Text;
-    using BestHTTP;
+    using Best.HTTP;
+    using Best.HTTP.Request.Settings;
+    using Best.HTTP.Response;
     using Cysharp.Threading.Tasks;
     using GameFoundation.Scripts.Network.WebService.Requests;
     using GameFoundation.Scripts.Utilities.LogService;
@@ -79,7 +81,7 @@
                     request.AddHeader("game-version", GameVersion.Version);
                 }
 
-                request.RawData = Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(wrappedData));
+                request.UploadSettings.UploadStream = new MemoryStream(Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(httpRequestData)));
             }
         }
 
@@ -96,7 +98,7 @@
             }
 
             request.AddHeader("Content-Type", "application/json");
-            request.RawData = Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(httpRequestData));
+            request.UploadSettings.UploadStream = new MemoryStream(Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(httpRequestData)));
         }
 
         #region Post
@@ -263,10 +265,11 @@
             filePath = this.GetDownloadPath(filePath);
 
             var request = new HTTPRequest(new Uri(address));
-            request.Timeout            =  TimeSpan.FromSeconds(this.GetDownloadTimeout());
-            request.OnDownloadProgress =  (httpRequest, downloaded, length) => onDownloadProgress(downloaded, length);
-            request.OnStreamingData    += OnData;
-            request.DisableCache       =  true;
+
+            request.TimeoutSettings.Timeout             =  TimeSpan.FromSeconds(this.GetDownloadTimeout());
+            request.DownloadSettings.OnDownloadProgress =  (httpRequest, downloaded, length) => onDownloadProgress(downloaded, length);
+            request.DownloadSettings.OnDownloadStarted  += OnData;
+            // request.DisableCache                        =  true;
 
             var response = await request.GetHTTPResponseAsync();
 
@@ -299,18 +302,15 @@
                     break;
             }
 
-            bool OnData(HTTPRequest req, HTTPResponse resp, byte[] dataFragment, int dataFragmentLength)
+            void OnData(HTTPRequest req, HTTPResponse resp, DownloadContentStream stream)
             {
                 if (resp.IsSuccess)
                 {
                     if (!(req.Tag is FileStream fileStream))
                         req.Tag = fileStream = new FileStream(filePath, FileMode.Create);
 
-                    fileStream.Write(dataFragment, 0, dataFragmentLength);
+                    // fileStream.Write(dataFragment, 0, dataFragmentLength);
                 }
-
-                // Return true if dataFragment is processed so the plugin can recycle it
-                return true;
             }
         }
 
@@ -318,20 +318,18 @@
         {
             var response = new byte[] { };
             var request  = new HTTPRequest(new Uri(address));
-            request.Timeout            =  TimeSpan.FromSeconds(this.GetDownloadTimeout());
-            request.OnDownloadProgress =  (httpRequest, downloaded, length) => onDownloadProgress(downloaded, length);
-            request.OnStreamingData    += OnData;
-            request.DisableCache       =  true;
+            request.TimeoutSettings.Timeout             =  TimeSpan.FromSeconds(this.GetDownloadTimeout());
+            request.DownloadSettings.OnDownloadProgress =  (httpRequest, downloaded, length) => onDownloadProgress(downloaded, length);
+            request.DownloadSettings.OnDownloadStarted  += OnData;
+            // request.DisableCache                        =  true;
             await request.GetHTTPResponseAsync();
 
-            bool OnData(HTTPRequest req, HTTPResponse resp, byte[] dataFragment, int dataFragmentLength)
+            void OnData(HTTPRequest req, HTTPResponse resp, DownloadContentStream stream)
             {
                 if (resp.IsSuccess)
                 {
-                    response = dataFragment;
+                    response = stream.Response.Data;
                 }
-
-                return true;
             }
 
             return response;
@@ -382,8 +380,14 @@
             {
                 try
                 {
-                    request         = new HTTPRequest(this.ReplaceUri($"{route}{parameters}"), methods);
-                    request.Timeout = TimeSpan.FromSeconds(this.GetHttpTimeout());
+                    request = new HTTPRequest(this.ReplaceUri($"{route}{parameters}"), methods)
+                    {
+                        TimeoutSettings =
+                        {
+                            Timeout = TimeSpan.FromSeconds(this.GetHttpTimeout())
+                        },
+                        RetrySettings = new RetrySettings(5)
+                    };
 
                     if (includeBody)
                     {
@@ -439,7 +443,9 @@
                         {
                             this.RetryCount[methods]++;
                             this.HasInternetConnection.Value = true;
-                            this.Logger.LogWithColor($"Retry {this.RetryCount[methods]}/ {maximumRetry} for request {request.Uri} Error detail:{ex.Message}, {ex.StatusCode}, {ex.Content}", Color.cyan);
+
+                            this.Logger.LogWithColor($"Retry {this.RetryCount[methods]}/ {maximumRetry} for request {request.Uri} Error detail:{ex.Message}, {ex.StatusCode}, {ex.Content}",
+                                Color.cyan);
                         }
 
                         if (this.RetryCount[methods] >= maximumRetry)
@@ -485,8 +491,13 @@
 #if UNITY_EDITOR || DEVELOPMENT_BUILD||SHOW_API_LOG
             try
             {
+                var listHeader = "";
+                request.EnumerateHeaders(Callback, false);
+
+                void Callback(string header, List<string> values) { listHeader += $"{header} : {values.Join(",")} \n"; }
+
                 this.Logger.Log(
-                    $"{request.Uri} - [REQUEST] - Header: {request.DumpHeaders()} - \n Body:{Encoding.UTF8.GetString(request.GetEntityBody())}");
+                    $"{request.Uri} - [REQUEST] - Header: {listHeader} - \n Body:{JsonConvert.SerializeObject(requestData)}");
             }
             catch (Exception e)
             {
