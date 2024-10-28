@@ -321,7 +321,7 @@
             request.TimeoutSettings.Timeout             =  TimeSpan.FromSeconds(this.GetDownloadTimeout());
             request.DownloadSettings.OnDownloadProgress =  (httpRequest, downloaded, length) => onDownloadProgress(downloaded, length);
             request.DownloadSettings.OnDownloadStarted  += OnData;
-            // request.DisableCache                        =  true;
+            request.DownloadSettings.DisableCache                        =  true;
             await request.GetHTTPResponseAsync();
 
             void OnData(HTTPRequest req, HTTPResponse resp, DownloadContentStream stream)
