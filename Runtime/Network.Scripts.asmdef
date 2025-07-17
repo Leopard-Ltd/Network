@@ -8,11 +8,12 @@
         "GameFoundation.Utilities",
         "GameFoundation.Script",
         "UniTask",
-        "Zenject-Source",
         "Zenject-Signals",
         "Zenject",
         "MessagePipe",
-        "MessagePipe.Zenject"
+        "MessagePipe.Zenject",
+        "Network.Scipt.BestHttp",
+        "Network.Script.UnityWebRequest"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],
