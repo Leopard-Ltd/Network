@@ -33,10 +33,20 @@ namespace BaseWithBestHttp.Websocket
 
         public virtual void Init(string uri, string token)
         {
+            var transportTypes = TransportTypes.LongPolling;
+            
+#if !BESTHTTP_DISABLE_WEBSOCKET
+            transportTypes = TransportTypes.WebSocket;
+#endif
             this.HubConnection = new HubConnection(new Uri(uri), new MessagePackProtocol())
             {
                 AuthenticationProvider = new CustomAuthenticator(token, GameVersion.Version),
-                Options                = { SkipNegotiation = true, PreferedTransport = TransportTypes.WebSocket }
+                Options =
+                {
+                    SkipNegotiation = true,
+
+                    PreferedTransport = transportTypes
+                }
             };
 
             this.HubConnection.OnConnected    += this.OnConnected;
